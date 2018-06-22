@@ -43,11 +43,10 @@ def getLocation(neighbours, snr):
             votes[location] = 1
     sortedVotes = sorted(votes.items(), key=operator.itemgetter(1), reverse=True)
     for i in range(len(sortedVotes)):
-        p.append(tuple(map(int, sortedVotes[i][0].split(","))))
-    if len(p) < 2:
-        centroid = p
-    else:
-        centroid=LineString(p).centroid.wkt
+        for j in range(sortedVotes[i][1]+1):
+            p.append(tuple(map(int, sortedVotes[j][0].split(","))))
+    centroid=LineString(p).centroid.wkt
+    
     #return the location with the highest votes, and the % accuracy
     return [sortedVotes[0][0],
             round(float(votes[sortedVotes[0][0]])/len(neighbours)*100.0, 2),
@@ -57,9 +56,9 @@ y=[]
 data=[]
 snr={}
 temp=[]
-pos=[100,100,100]
+pos=[100,100,100,100]
 is_running=True
-k=5
+k=7
 
 
 ofilename = input("What is the offline file name?") or 'onlinephase.csv'
@@ -84,9 +83,6 @@ try:
             
             temp = []   
 
-    #for key in sorted(snr.iterkeys()):
-        #print "%s: %s" % (key, snr[key])
-
     clf=SVC()
     clf.fit(data,y)
 
@@ -109,22 +105,18 @@ try:
 
                 decision = getLocation(neighbours, snr)
                 print ('\n kNN: \n Location:', decision[0], '\n Confidence:', decision[1],'%')
-                print('\n Centroid:', decision[2])
+                print('\n SP Centroid:', decision[2])
 
                 if len(pos)==3:
-                    svm_pos=list(pos)
-                    svm_pos.append(0)
+                    pos.append(0)
                     #print('\n svm_pos:', svm_pos)
-                print('\n SVM:', clf.predict([svm_pos]), '\n')
-                
-            
-                time.sleep(1.5)
-
+                print('\n SVM:', clf.predict([pos]), '\n')
                 
         #the code to clear file
         with open(ifilename, 'w+') as csvfile3:
             csvfile3.close() #clear the file by writing nothing to the file
         
+        time.sleep(1.5)
 
 except IOError:
     print("Offline file does not exist")
